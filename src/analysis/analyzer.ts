@@ -55,7 +55,11 @@ function computeDiscardEvals(ai: any): DiscardEval[] {
   const shoupai = ai.shoupai
   const paishu = ai._suanpai.get_paishu()
 
-  for (const p of shoupai.get_dapai()) {
+  const dapai = shoupai.get_dapai()
+  if (!dapai) {
+    throw new Error('手牌需要是14张（含自摸牌）才能进行何切分析')
+  }
+  for (const p of dapai) {
     const after = shoupai.clone().dapai(p)
     const xiangting = Majiang.Util.xiangting(after)
     const tingpai = Majiang.Util.tingpai(after)
