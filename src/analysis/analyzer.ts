@@ -65,8 +65,7 @@ function computeDiscardEvals(ai: any): DiscardEval[] {
     if (!row?.p) continue
     if (row.m) continue
     const discard = row.p
-    const xiangting =
-      row.n_xiangting ?? Majiang.Util.xiangting(shoupai.clone().dapai(discard))
+    const xiangting = row.n_xiangting ?? Majiang.Util.xiangting(shoupai.clone().dapai(discard))
     const tingpai = row.tingpai ?? []
     const n_tingpai = row.n_tingpai ?? 0
     const ev = Number.isFinite(row.ev) ? row.ev : null

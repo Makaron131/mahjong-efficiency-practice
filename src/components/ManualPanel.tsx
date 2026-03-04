@@ -31,9 +31,7 @@ export function ManualPanel({
 }: ManualPanelProps) {
   return (
     <section className="glass rounded-3xl p-6">
-      <div className="text-base font-semibold text-slate-800">
-        手牌输入（自查）
-      </div>
+      <div className="text-base font-semibold text-slate-800">手牌输入（自查）</div>
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <label className="flex flex-col gap-2 text-sm text-slate-500">
           <span>手牌（14张）</span>

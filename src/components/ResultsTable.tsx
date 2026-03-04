@@ -29,9 +29,7 @@ export function ResultsTable({ results, highlight }: ResultsTableProps) {
               <div key={row.discard} className={rowClass}>
                 <span className="font-mono">{row.discard}</span>
                 <span>{row.xiangting}</span>
-                <span className="font-semibold text-emerald-700">
-                  {row.tingpai.join(' ')}
-                </span>
+                <span className="font-semibold text-emerald-700">{row.tingpai.join(' ')}</span>
                 <span>{row.n_tingpai}</span>
                 <span>{row.ev == null ? '--' : row.ev.toFixed(2)}</span>
               </div>

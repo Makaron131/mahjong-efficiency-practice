@@ -49,12 +49,8 @@ export function RandomPanel({
       <section className="glass rounded-3xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-base font-semibold text-slate-800">
-              随机练习
-            </div>
-            <div className="text-sm text-slate-500">
-              选择切牌并提交，查看你的判断与最优解差异。
-            </div>
+            <div className="text-base font-semibold text-slate-800">随机练习</div>
+            <div className="text-sm text-slate-500">选择切牌并提交，查看你的判断与最优解差异。</div>
           </div>
           <button
             type="button"
@@ -140,9 +136,7 @@ export function RandomPanel({
       </section>
 
       <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-soft">
-        <div className="text-base font-semibold text-slate-800">
-          请选择切牌（可多选）
-        </div>
+        <div className="text-base font-semibold text-slate-800">请选择切牌（可多选）</div>
         <div className="mt-4 flex flex-wrap gap-2">
           {result?.results.map((row) => (
             <button
@@ -180,25 +174,19 @@ export function RandomPanel({
           <div className="text-base font-semibold text-slate-800">分析结果</div>
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <div className="text-xs uppercase tracking-widest text-slate-400">
-                推荐切牌
-              </div>
+              <div className="text-xs uppercase tracking-widest text-slate-400">推荐切牌</div>
               <div className="mt-2 text-lg font-semibold text-slate-900">
                 {best.length ? best.map((b) => b.discard).join(' / ') : '--'}
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <div className="text-xs uppercase tracking-widest text-slate-400">
-                你的选择
-              </div>
+              <div className="text-xs uppercase tracking-widest text-slate-400">你的选择</div>
               <div className="mt-2 text-sm font-semibold text-slate-700">
                 {selected.length ? selected.join(' / ') : '--'}
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <div className="text-xs uppercase tracking-widest text-slate-400">
-                最优进张
-              </div>
+              <div className="text-xs uppercase tracking-widest text-slate-400">最优进张</div>
               <div className="mt-2 text-sm font-semibold text-emerald-700">
                 {best.length ? best[0].tingpai.join(' ') : '--'}
               </div>
@@ -216,9 +204,7 @@ export function RandomPanel({
           {selected.some((s) => !result.results.find((r) => r.discard === s)) && (
             <div className="mt-4 text-sm font-semibold text-rose-600">
               你选择了非候选切牌：{' '}
-              {selected
-                .filter((s) => !result.results.find((r) => r.discard === s))
-                .join(' / ')}
+              {selected.filter((s) => !result.results.find((r) => r.discard === s)).join(' / ')}
             </div>
           )}
         </section>
