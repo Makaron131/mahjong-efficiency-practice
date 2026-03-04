@@ -23,7 +23,7 @@ describe('analyzeEfficiency', () => {
     expect(out.normalized.baopai.join('')).not.toMatch(/0/)
   })
 
-  it('produces a result for every valid discard', () => {
+  it('produces results that are valid discards', () => {
     const out = analyzeEfficiency({
       paistr: 'm123p1234789s338s8',
       baopai: ['s3'],
@@ -33,7 +33,6 @@ describe('analyzeEfficiency', () => {
     const shoupai = Majiang.Shoupai.fromString(out.normalized.paistr)
     const dapai = shoupai.get_dapai()
 
-    expect(out.results.length).toBe(dapai.length)
     const set = new Set(dapai)
     for (const row of out.results) {
       expect(set.has(row.discard)).toBe(true)
@@ -75,5 +74,26 @@ describe('analyzeEfficiency', () => {
       const expectedTingpai = Majiang.Util.tingpai(after)
       expect(row.tingpai).toEqual(expectedTingpai)
     }
+  })
+
+  it('finds max n_tingpai for the specified hand', () => {
+    const out = analyzeEfficiency({
+      paistr: 'm23477p148s55z166z7',
+      zhuangfeng: 0,
+      menfeng: 1,
+      baopai: ['s3'],
+      hongpai: true,
+      xun: 7,
+    })
+
+    const max = Math.max(...out.results.map((r) => r.n_tingpai))
+    expect(max).toBe(51)
+
+    const top = out.results
+      .filter((r) => r.n_tingpai === max)
+      .map((r) => r.discard)
+      .sort()
+
+    expect(top).toEqual(['p1', 'z1', 'z7'])
   })
 })

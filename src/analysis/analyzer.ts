@@ -51,31 +51,35 @@ function buildBaseInfo(input: ReturnType<typeof normalizeInput>): BaseInfo {
 }
 
 function computeDiscardEvals(ai: any): DiscardEval[] {
-  const results: DiscardEval[] = []
   const shoupai = ai.shoupai
-  const paishu = ai._suanpai.get_paishu()
-
   const dapai = shoupai.get_dapai()
   if (!dapai) {
     throw new Error('手牌需要是14张（含自摸牌）才能进行何切分析')
   }
-  for (const p of dapai) {
-    const after = shoupai.clone().dapai(p)
-    const xiangting = Majiang.Util.xiangting(after)
-    const tingpai = Majiang.Util.tingpai(after)
-    const n_tingpai = tingpai
-      .map((tp: string) => ai._suanpai._paishu[tp[0]][tp[1]])
-      .reduce((x: number, y: number) => x + y, 0)
-    const ev = ai.eval_shoupai(after, paishu)
-    results.push({
-      discard: p,
+
+  const info: any[] = []
+  ai.select_dapai(info)
+
+  const byDiscard = new Map<string, DiscardEval>()
+  for (const row of info) {
+    if (!row?.p) continue
+    if (row.m) continue
+    const discard = row.p
+    const xiangting =
+      row.n_xiangting ?? Majiang.Util.xiangting(shoupai.clone().dapai(discard))
+    const tingpai = row.tingpai ?? []
+    const n_tingpai = row.n_tingpai ?? 0
+    const ev = Number.isFinite(row.ev) ? row.ev : null
+    byDiscard.set(discard, {
+      discard,
       xiangting,
       tingpai,
       n_tingpai,
-      ev: Number.isFinite(ev) ? ev : null,
+      ev,
     })
   }
 
+  const results = Array.from(byDiscard.values())
   results.sort((a, b) => {
     if (a.ev == null && b.ev == null) return 0
     if (a.ev == null) return 1
