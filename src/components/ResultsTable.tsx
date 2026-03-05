@@ -1,4 +1,5 @@
 import type { AnalyzeOutput } from '../analysis'
+import { tileImage } from '../lib/tiles'
 
 type ResultsTableProps = {
   results: AnalyzeOutput['results']
@@ -7,31 +8,39 @@ type ResultsTableProps = {
 
 export function ResultsTable({ results, highlight }: ResultsTableProps) {
   return (
-    <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200">
-      <div className="min-w-[520px]">
-        <div className="grid grid-cols-[80px_80px_1fr_80px_100px] gap-3 bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-widest text-slate-500">
+    <div className="mt-4 rounded-2xl border border-slate-200">
+      <div>
+        <div className="grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 bg-slate-100 px-3 py-2 text-[11px] font-semibold uppercase tracking-widest text-slate-500 sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]">
           <span>切牌</span>
           <span>向听</span>
           <span>进张</span>
           <span>枚数</span>
-          <span>评价</span>
+          <span className="hidden sm:inline">评价</span>
         </div>
         <div>
           {results.map((row) => {
             const state = highlight(row.discard)
             const rowClass =
               state === 'best'
-                ? 'grid grid-cols-[80px_80px_1fr_80px_100px] gap-3 border-t border-emerald-200/70 bg-emerald-50/60 px-4 py-3 text-sm'
+                ? 'grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 border-t border-emerald-200/70 bg-emerald-50/60 px-3 py-2 text-sm sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]'
                 : state === 'warn'
-                  ? 'grid grid-cols-[80px_80px_1fr_80px_100px] gap-3 border-t border-yellow-200/70 bg-yellow-50/70 px-4 py-3 text-sm'
-                  : 'grid grid-cols-[80px_80px_1fr_80px_100px] gap-3 border-t border-slate-200 px-4 py-3 text-sm hover:bg-slate-50'
+                  ? 'grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 border-t border-yellow-200/70 bg-yellow-50/70 px-3 py-2 text-sm sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]'
+                  : 'grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 border-t border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]'
             return (
               <div key={row.discard} className={rowClass}>
-                <span className="font-mono">{row.discard}</span>
+                <span>
+                  <img src={tileImage(row.discard)} alt={row.discard} className="h-7 w-5" />
+                </span>
                 <span>{row.xiangting}</span>
-                <span className="font-semibold text-emerald-700">{row.tingpai.join(' ')}</span>
+                <span className="flex flex-wrap gap-1">
+                  {row.tingpai.map((t) => (
+                    <img key={t} src={tileImage(t)} alt={t} className="h-7 w-5" />
+                  ))}
+                </span>
                 <span>{row.n_tingpai}</span>
-                <span>{row.ev == null ? '--' : row.ev.toFixed(2)}</span>
+                <span className="hidden sm:inline">
+                  {row.ev == null ? '--' : row.ev.toFixed(2)}
+                </span>
               </div>
             )
           })}

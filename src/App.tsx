@@ -1,16 +1,20 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { analyzeEfficiency } from './analysis'
+import { FloatingHand } from './components/FloatingHand'
 import { Hero } from './components/Hero'
 import { ManualPanel } from './components/ManualPanel'
 import { ManualResults } from './components/ManualResults'
 import { ModeTabs } from './components/ModeTabs'
 import { RandomPanel } from './components/RandomPanel'
-import { randomHand } from './lib/hand'
+import { randomHand, randomTile } from './lib/hand'
 
 type Mode = 'manual' | 'random'
 
 function App() {
   const [mode, setMode] = useState<Mode>('manual')
+  const [isHandVisible, setIsHandVisible] = useState(true)
+  const [manualHandEl, setManualHandEl] = useState<HTMLDivElement | null>(null)
+  const [randomHandEl, setRandomHandEl] = useState<HTMLDivElement | null>(null)
 
   const [paistr, setPaistr] = useState('m123p123789s338s88')
   const [baopai, setBaopai] = useState('s3')
@@ -19,14 +23,16 @@ function App() {
   const [xun, setXun] = useState(5)
   const [hongpai, setHongpai] = useState(true)
 
-  const [randomPaistr, setRandomPaistr] = useState(() => randomHand())
-  const [randomBaopai, setRandomBaopai] = useState('s3')
-  const [randomZhuangfeng, setRandomZhuangfeng] = useState(0)
-  const [randomMenfeng, setRandomMenfeng] = useState(0)
-  const [randomXun, setRandomXun] = useState(5)
-  const [randomHongpai, setRandomHongpai] = useState(true)
+  const [includeZi, setIncludeZi] = useState(false)
+  const [randomPaistr, setRandomPaistr] = useState(() => randomHand(false))
+  const [randomBaopai, setRandomBaopai] = useState(() => randomTile())
+  const [randomZhuangfeng, setRandomZhuangfeng] = useState(() => Math.floor(Math.random() * 4))
+  const [randomMenfeng, setRandomMenfeng] = useState(() => Math.floor(Math.random() * 4))
+  const [randomXun] = useState(5)
+  const [randomHongpai] = useState(true)
   const [selected, setSelected] = useState<string[]>([])
   const [submitted, setSubmitted] = useState(false)
+  const [analysisOpen, setAnalysisOpen] = useState(false)
 
   const { result, error } = useMemo(() => {
     try {
@@ -97,9 +103,13 @@ function App() {
   }, [randomResult])
 
   const handleGenerate = () => {
-    setRandomPaistr(randomHand())
+    setRandomPaistr(randomHand(includeZi))
+    setRandomBaopai(randomTile())
+    setRandomZhuangfeng(Math.floor(Math.random() * 4))
+    setRandomMenfeng(Math.floor(Math.random() * 4))
     setSelected([])
     setSubmitted(false)
+    setAnalysisOpen(false)
   }
 
   const toggleSelect = (discard: string) => {
@@ -110,11 +120,28 @@ function App() {
 
   const handleSubmit = () => {
     setSubmitted(true)
+    setAnalysisOpen(true)
   }
+
+  useEffect(() => {
+    const target = mode === 'manual' ? manualHandEl : randomHandEl
+    if (!target) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        setIsHandVisible(entry.isIntersecting)
+      },
+      { threshold: 0.15 },
+    )
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [mode, manualHandEl, randomHandEl])
+
+  const showFloating = !!(mode === 'manual' ? manualHandEl : randomHandEl) && !isHandVisible
 
   return (
     <div className="min-h-screen bg-linear-to-br from-emerald-50 via-cyan-50 to-indigo-100">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-5 pb-20 pt-12">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-16 pt-4 sm:pt-6">
         <Hero />
         <ModeTabs mode={mode} onChange={setMode} />
 
@@ -128,6 +155,7 @@ function App() {
               xun={xun}
               hongpai={hongpai}
               error={error}
+              handRef={setManualHandEl}
               onPaistrChange={setPaistr}
               onBaopaiChange={setBaopai}
               onZhuangfengChange={setZhuangfeng}
@@ -147,19 +175,20 @@ function App() {
             menfeng={randomMenfeng}
             xun={randomXun}
             hongpai={randomHongpai}
+            includeZi={includeZi}
             error={randomError}
+            handRef={setRandomHandEl}
             selected={selected}
             submitted={submitted}
             result={randomResult}
             best={randomBest}
+            analysisOpen={analysisOpen}
             onGenerate={handleGenerate}
-            onBaopaiChange={setRandomBaopai}
-            onZhuangfengChange={setRandomZhuangfeng}
-            onMenfengChange={setRandomMenfeng}
-            onXunChange={setRandomXun}
-            onHongpaiToggle={() => setRandomHongpai((v) => !v)}
+            onIncludeZiChange={setIncludeZi}
             onToggleSelect={toggleSelect}
             onSubmit={handleSubmit}
+            onOpenAnalysis={() => setAnalysisOpen(true)}
+            onCloseAnalysis={() => setAnalysisOpen(false)}
           />
         )}
 
@@ -167,6 +196,7 @@ function App() {
           数据来自本地分析引擎，仅用于练习参考。
         </footer>
       </div>
+      <FloatingHand paistr={mode === 'manual' ? paistr : randomPaistr} visible={showFloating} />
     </div>
   )
 }

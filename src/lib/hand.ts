@@ -14,15 +14,17 @@ function buildPaistrFromTiles(tiles: string[]) {
   return out
 }
 
-export function randomHand() {
+export function randomHand(includeZi = true) {
   const tiles: string[] = []
   for (const s of ['m', 'p', 's']) {
     for (let n = 1; n <= 9; n += 1) {
       for (let i = 0; i < 4; i += 1) tiles.push(`${s}${n}`)
     }
   }
-  for (let n = 1; n <= 7; n += 1) {
-    for (let i = 0; i < 4; i += 1) tiles.push(`z${n}`)
+  if (includeZi) {
+    for (let n = 1; n <= 7; n += 1) {
+      for (let i = 0; i < 4; i += 1) tiles.push(`z${n}`)
+    }
   }
 
   const pick: string[] = []
@@ -31,4 +33,17 @@ export function randomHand() {
     pick.push(tiles.splice(idx, 1)[0])
   }
   return buildPaistrFromTiles(pick)
+}
+
+export function randomTile() {
+  const pool: string[] = []
+  for (const s of ['m', 'p', 's']) {
+    for (let n = 1; n <= 9; n += 1) {
+      pool.push(`${s}${n}`)
+    }
+  }
+  for (let n = 1; n <= 7; n += 1) {
+    pool.push(`z${n}`)
+  }
+  return pool[Math.floor(Math.random() * pool.length)]
 }
