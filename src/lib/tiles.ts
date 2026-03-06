@@ -1,5 +1,5 @@
 export function tileImage(code: string) {
-  return `/src/assets/tiles/${code}.gif`
+  return new URL(`../assets/tiles/${code}.gif`, import.meta.url).href
 }
 
 export function parsePaistr(paistr: string) {
