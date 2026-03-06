@@ -24,6 +24,7 @@ type RandomPanelProps = {
   streak: number
   bestStreak: number
   lastOutcome: 'best' | 'picked' | 'miss' | null
+  celebrateId: number
   onGenerate: () => void
   onIncludeZiChange: (value: boolean) => void
   onToggleSelect: (discard: string) => void
@@ -49,6 +50,7 @@ export function RandomPanel({
   streak,
   bestStreak,
   lastOutcome,
+  celebrateId,
   onGenerate,
   onIncludeZiChange,
   onToggleSelect,
@@ -56,56 +58,55 @@ export function RandomPanel({
   onOpenAnalysis,
 }: RandomPanelProps) {
   const outcomeLabel =
-    lastOutcome === 'best'
-      ? '命中最优'
-      : lastOutcome === 'picked'
-        ? '一般正确'
-        : lastOutcome === 'miss'
-          ? '未命中'
-          : '等待提交'
+    lastOutcome === 'best' ? '正确' : lastOutcome === 'miss' ? '错误' : '等待提交'
 
   const outcomeTone =
     lastOutcome === 'best'
       ? 'text-emerald-600'
-      : lastOutcome === 'picked'
-        ? 'text-amber-600'
-        : lastOutcome === 'miss'
-          ? 'text-rose-600'
-          : 'text-slate-400'
+      : lastOutcome === 'miss'
+        ? 'text-rose-600'
+        : 'text-slate-400'
 
   return (
     <>
       <section className="glass rounded-3xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold text-slate-800">随机挑战</div>
-            <div className="text-xs text-slate-500">选择切牌并提交，获取评分与连胜。</div>
+            <div className="text-sm font-semibold text-slate-800">何切</div>
+            <div className="text-xs text-slate-500">选择切牌并提交，开始连胜挑战。</div>
           </div>
           <button
             type="button"
             className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow"
             onClick={onGenerate}
           >
-            生成随机手牌
+            换牌
           </button>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
           <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200/70">
-            <span className="text-slate-400">得分</span>
+            <span className="text-slate-400">正确</span>
             <span className="text-sm font-semibold text-slate-900">{score}</span>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200/70">
-            <span className="text-slate-400">连胜</span>
+            <span className="text-slate-400">连对</span>
             <span className="text-sm font-semibold text-slate-900">{streak}</span>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200/70">
-            <span className="text-slate-400">最高</span>
+            <span className="text-slate-400">最高连对</span>
             <span className="text-sm font-semibold text-slate-900">{bestStreak}</span>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200/70">
             <span className="text-slate-400">本题</span>
-            <span className={`text-sm font-semibold ${outcomeTone}`}>{outcomeLabel}</span>
+            <span
+              key={lastOutcome === 'best' ? celebrateId : 'idle'}
+              className={`text-sm font-semibold ${outcomeTone} ${
+                lastOutcome === 'best' ? 'animate-success-pop' : ''
+              }`}
+            >
+              {outcomeLabel}
+            </span>
           </div>
         </div>
 
@@ -158,7 +159,7 @@ export function RandomPanel({
             <div className="flex items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 ring-1 ring-slate-200/70">
               <span className="text-slate-400">{xun}巡</span>
               <span className={hongpai ? 'text-emerald-700' : 'text-slate-400'}>
-                {hongpai ? '赤开' : '赤关'}
+                {hongpai ? '无赤' : '有赤'}
               </span>
             </div>
           </div>
@@ -227,7 +228,7 @@ export function RandomPanel({
                 </div>
               </div>
               <div>
-                <div className="text-[11px] uppercase tracking-widest text-slate-400">正确答案</div>
+                <div className="text-[11px] uppercase tracking-widest text-slate-400">最优切牌</div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {best.length ? (
                     best.map((b) => (

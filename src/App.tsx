@@ -10,23 +10,23 @@ import { randomHand, randomTile } from './lib/hand'
 
 const getInitialStats = () => {
   if (typeof window === 'undefined') {
-    return { score: 0, streak: 0, bestStreak: 0 }
+    return { correct: 0, streak: 0, bestStreak: 0 }
   }
   const stored = localStorage.getItem('mahjong-game-stats')
-  if (!stored) return { score: 0, streak: 0, bestStreak: 0 }
+  if (!stored) return { correct: 0, streak: 0, bestStreak: 0 }
   try {
     const data = JSON.parse(stored) as {
-      score?: number
+      correct?: number
       streak?: number
       bestStreak?: number
     }
     return {
-      score: typeof data.score === 'number' ? data.score : 0,
+      correct: typeof data.correct === 'number' ? data.correct : 0,
       streak: typeof data.streak === 'number' ? data.streak : 0,
       bestStreak: typeof data.bestStreak === 'number' ? data.bestStreak : 0,
     }
   } catch {
-    return { score: 0, streak: 0, bestStreak: 0 }
+    return { correct: 0, streak: 0, bestStreak: 0 }
   }
 }
 
@@ -54,14 +54,18 @@ function App() {
   const [submitted, setSubmitted] = useState(false)
   const [analysisOpen, setAnalysisOpen] = useState(false)
   const initialStats = getInitialStats()
-  const [score, setScore] = useState(initialStats.score)
+  const [correctCount, setCorrectCount] = useState(initialStats.correct)
   const [streak, setStreak] = useState(initialStats.streak)
   const [bestStreak, setBestStreak] = useState(initialStats.bestStreak)
   const [lastOutcome, setLastOutcome] = useState<'best' | 'picked' | 'miss' | null>(null)
+  const [celebrateId, setCelebrateId] = useState(0)
 
   useEffect(() => {
-    localStorage.setItem('mahjong-game-stats', JSON.stringify({ score, streak, bestStreak }))
-  }, [score, streak, bestStreak])
+    localStorage.setItem(
+      'mahjong-game-stats',
+      JSON.stringify({ correct: correctCount, streak, bestStreak }),
+    )
+  }, [correctCount, streak, bestStreak])
 
   const { result, error } = useMemo(() => {
     try {
@@ -121,6 +125,12 @@ function App() {
   }, [randomResult])
 
   const handleGenerate = () => {
+    if (streak > 0 && selected.length === 0 && !submitted) {
+      const confirmReset = window.confirm('未作出选择就换牌将终止连胜，确定要换牌吗？')
+      if (!confirmReset) return
+      setStreak(0)
+      setLastOutcome(null)
+    }
     setRandomPaistr(randomHand(includeZi))
     setRandomBaopai(randomTile())
     setRandomZhuangfeng(Math.floor(Math.random() * 4))
@@ -140,17 +150,19 @@ function App() {
   const handleSubmit = () => {
     if (submitted) return
     setSubmitted(true)
-    setAnalysisOpen(true)
     const bestDiscards = new Set(randomBest.map((b) => b.discard))
-    const candidateDiscards = new Set(randomResult?.results.map((r) => r.discard) ?? [])
-    const hitBest = selected.some((s) => bestDiscards.has(s))
-    const hitCandidate = selected.some((s) => candidateDiscards.has(s))
-    const delta = hitBest ? 10 : hitCandidate ? 5 : 0
-    setScore((prev) => prev + delta)
-    const nextStreak = hitBest ? streak + 1 : 0
+    const isCorrect = selected.length > 0 && selected.every((s) => bestDiscards.has(s))
+    if (isCorrect) {
+      setCorrectCount((prev) => prev + 1)
+      setCelebrateId((prev) => prev + 1)
+    }
+    const nextStreak = isCorrect ? streak + 1 : 0
     setStreak(nextStreak)
     setBestStreak((prev) => Math.max(prev, nextStreak))
-    setLastOutcome(hitBest ? 'best' : hitCandidate ? 'picked' : 'miss')
+    setLastOutcome(isCorrect ? 'best' : 'miss')
+    if (!isCorrect) {
+      setAnalysisOpen(true)
+    }
   }
 
   useEffect(() => {
@@ -177,15 +189,15 @@ function App() {
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-16 pt-4 sm:pt-6">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-lg font-semibold text-slate-900">何切竞技场</div>
-            <div className="text-xs text-slate-500">随机挑战 · 连胜评分 · 练习与竞技</div>
+            <div className="text-lg font-semibold text-slate-900">何切挑战</div>
+            <div className="text-xs text-slate-500">连胜评分 · 练习与挑战</div>
           </div>
           <button
             type="button"
             onClick={() => setManualOpen(true)}
             className="rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur hover:border-slate-300 hover:text-slate-800"
           >
-            牌谱解析
+            自定义分析
           </button>
         </header>
 
@@ -203,10 +215,11 @@ function App() {
           submitted={submitted}
           result={randomResult}
           best={randomBest}
-          score={score}
+          score={correctCount}
           streak={streak}
           bestStreak={bestStreak}
           lastOutcome={lastOutcome}
+          celebrateId={celebrateId}
           onGenerate={handleGenerate}
           onIncludeZiChange={setIncludeZi}
           onToggleSelect={toggleSelect}
@@ -268,7 +281,7 @@ function App() {
         <AnalysisModal
           open={manualAnalysisOpen}
           title="手动解析"
-          subtitle="根据手动输入参数生成的分析结果。"
+          subtitle="根据自定义参数生成的分析结果。"
           hand={paistr}
           results={result.results}
           highlight={() => 'none'}

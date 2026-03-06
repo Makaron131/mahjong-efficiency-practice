@@ -36,10 +36,10 @@ export function GridBackground() {
       offsetY = (offsetY - speed * dt + grid) % grid
 
       ctx.clearRect(0, 0, width, height)
-      ctx.fillStyle = 'rgba(24, 72, 52, 0.18)'
+      ctx.fillStyle = 'rgba(70, 170, 135, 0.12)'
       ctx.fillRect(0, 0, width, height)
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
       ctx.lineWidth = 2
       const startX = -grid + offsetX
       const startY = -grid + offsetY
