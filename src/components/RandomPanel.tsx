@@ -1,8 +1,6 @@
 import type { AnalyzeOutput } from '../analysis'
 import type { Ref } from 'react'
-import { useEffect, useRef, useState } from 'react'
 import { doraFromIndicator, parsePaistr, tileImage } from '../lib/tiles'
-import { ResultsTable } from './ResultsTable'
 
 function windLabel(value: number) {
   return ['东', '南', '西', '北'][value] ?? '--'
@@ -22,13 +20,15 @@ type RandomPanelProps = {
   submitted: boolean
   result: AnalyzeOutput | null
   best: AnalyzeOutput['results']
-  analysisOpen: boolean
+  score: number
+  streak: number
+  bestStreak: number
+  lastOutcome: 'best' | 'picked' | 'miss' | null
   onGenerate: () => void
   onIncludeZiChange: (value: boolean) => void
   onToggleSelect: (discard: string) => void
   onSubmit: () => void
   onOpenAnalysis: () => void
-  onCloseAnalysis: () => void
 }
 
 export function RandomPanel({
@@ -45,43 +45,41 @@ export function RandomPanel({
   submitted,
   result,
   best,
-  analysisOpen,
+  score,
+  streak,
+  bestStreak,
+  lastOutcome,
   onGenerate,
   onIncludeZiChange,
   onToggleSelect,
   onSubmit,
   onOpenAnalysis,
-  onCloseAnalysis,
 }: RandomPanelProps) {
-  const modalScrollRef = useRef<HTMLDivElement>(null)
-  const tableRef = useRef<HTMLDivElement>(null)
-  const [isTableVisible, setIsTableVisible] = useState(false)
+  const outcomeLabel =
+    lastOutcome === 'best'
+      ? '命中最优'
+      : lastOutcome === 'picked'
+        ? '一般正确'
+        : lastOutcome === 'miss'
+          ? '未命中'
+          : '等待提交'
 
-  useEffect(() => {
-    if (!analysisOpen) return
-    const target = tableRef.current
-    const root = modalScrollRef.current
-    if (!target || !root) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        setIsTableVisible(entry.isIntersecting)
-      },
-      { threshold: 0.2, root },
-    )
-    observer.observe(target)
-    return () => observer.disconnect()
-  }, [analysisOpen])
-
-  const showModalHand = analysisOpen && isTableVisible
+  const outcomeTone =
+    lastOutcome === 'best'
+      ? 'text-emerald-600'
+      : lastOutcome === 'picked'
+        ? 'text-amber-600'
+        : lastOutcome === 'miss'
+          ? 'text-rose-600'
+          : 'text-slate-400'
 
   return (
     <>
       <section className="glass rounded-3xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold text-slate-800">随机练习</div>
-            <div className="text-xs text-slate-500">选择切牌并提交，查看你的判断与最优解差异。</div>
+            <div className="text-sm font-semibold text-slate-800">随机挑战</div>
+            <div className="text-xs text-slate-500">选择切牌并提交，获取评分与连胜。</div>
           </div>
           <button
             type="button"
@@ -90,6 +88,25 @@ export function RandomPanel({
           >
             生成随机手牌
           </button>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200/70">
+            <span className="text-slate-400">得分</span>
+            <span className="text-sm font-semibold text-slate-900">{score}</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200/70">
+            <span className="text-slate-400">连胜</span>
+            <span className="text-sm font-semibold text-slate-900">{streak}</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200/70">
+            <span className="text-slate-400">最高</span>
+            <span className="text-sm font-semibold text-slate-900">{bestStreak}</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 ring-1 ring-slate-200/70">
+            <span className="text-slate-400">本题</span>
+            <span className={`text-sm font-semibold ${outcomeTone}`}>{outcomeLabel}</span>
+          </div>
         </div>
 
         <div
@@ -164,32 +181,71 @@ export function RandomPanel({
       </section>
 
       <section className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-soft">
-        <div className="text-sm font-semibold text-slate-800">请选择切牌（可多选）</div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {result?.results.map((row) => (
-            <button
-              key={row.discard}
-              type="button"
-              onClick={() => onToggleSelect(row.discard)}
-              className={
-                selected.includes(row.discard)
-                  ? 'rounded-lg p-2 ring-2 ring-emerald-500/80'
-                  : 'rounded-lg p-2 opacity-90 hover:opacity-100'
-              }
-              aria-pressed={selected.includes(row.discard)}
-            >
-              <img
-                src={tileImage(row.discard)}
-                alt={row.discard}
-                className={
-                  selected.includes(row.discard)
-                    ? 'h-7 w-5 drop-shadow-[0_0_12px_rgba(16,185,129,0.75)]'
-                    : 'h-7 w-5'
-                }
-              />
-            </button>
-          ))}
-        </div>
+        {!submitted ? (
+          <>
+            <div className="text-sm font-semibold text-slate-800">请选择切牌（可多选）</div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {result?.results.map((row) => (
+                <button
+                  key={row.discard}
+                  type="button"
+                  onClick={() => onToggleSelect(row.discard)}
+                  className={
+                    selected.includes(row.discard)
+                      ? 'rounded-lg p-2 ring-2 ring-emerald-500/80'
+                      : 'rounded-lg p-2 opacity-90 hover:opacity-100'
+                  }
+                  aria-pressed={selected.includes(row.discard)}
+                >
+                  <img
+                    src={tileImage(row.discard)}
+                    alt={row.discard}
+                    className={
+                      selected.includes(row.discard)
+                        ? 'h-7 w-5 drop-shadow-[0_0_12px_rgba(16,185,129,0.75)]'
+                        : 'h-7 w-5'
+                    }
+                  />
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="text-sm font-semibold text-slate-800">你的选择</div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <div className="text-[11px] uppercase tracking-widest text-slate-400">你的选择</div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {selected.length ? (
+                    selected.map((s) => (
+                      <img key={s} src={tileImage(s)} alt={s} className="h-8 w-6" />
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-500">暂无</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] uppercase tracking-widest text-slate-400">正确答案</div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {best.length ? (
+                    best.map((b) => (
+                      <img
+                        key={b.discard}
+                        src={tileImage(b.discard)}
+                        alt={b.discard}
+                        className="h-8 w-6"
+                      />
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-500">暂无</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
           <button
@@ -209,153 +265,22 @@ export function RandomPanel({
               查看分析
             </button>
           )}
-          <div className="flex min-h-[28px] items-center text-xs text-slate-500">
-            已选择：
-            {selected.length ? (
-              <span className="ml-1 inline-flex flex-wrap gap-1">
-                {selected.map((s) => (
-                  <img key={s} src={tileImage(s)} alt={s} className="h-7 w-5 object-contain" />
-                ))}
-              </span>
-            ) : (
-              <span className="ml-1">暂无</span>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {analysisOpen && submitted && result && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 px-4 py-6 backdrop-blur-sm">
-          <div className="relative flex h-full max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
-            <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
-              <div>
-                <div className="text-base font-semibold text-slate-900">分析结果</div>
-                <div className="text-xs text-slate-500">对比你的切牌选择与最优解。</div>
-              </div>
-              <button
-                type="button"
-                onClick={onCloseAnalysis}
-                className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-500 hover:border-slate-300 hover:text-slate-700"
-              >
-                关闭
-              </button>
-            </div>
-
-            <div ref={modalScrollRef} className="flex-1 overflow-y-auto px-5 py-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                <div className="text-xs uppercase tracking-widest text-slate-400">当前手牌</div>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {parsePaistr(paistr).map((tile, index) => (
-                    <img
-                      key={`${tile}-modal-${index}`}
-                      src={tileImage(tile)}
-                      alt={tile}
-                      className="h-7 w-5"
-                    />
+          {!submitted && (
+            <div className="flex min-h-[28px] items-center text-xs text-slate-500">
+              已选择：
+              {selected.length ? (
+                <span className="ml-1 inline-flex flex-wrap gap-1">
+                  {selected.map((s) => (
+                    <img key={s} src={tileImage(s)} alt={s} className="h-7 w-5 object-contain" />
                   ))}
-                </div>
-              </div>
-
-              <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                  <div className="text-xs uppercase tracking-widest text-slate-400">推荐切牌</div>
-                  <div className="mt-1 text-sm font-semibold text-slate-900">
-                    {best.length ? (
-                      <div className="flex flex-wrap gap-1">
-                        {best.map((b) => (
-                          <img
-                            key={b.discard}
-                            src={tileImage(b.discard)}
-                            alt={b.discard}
-                            className="h-7 w-5"
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      '--'
-                    )}
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                  <div className="text-xs uppercase tracking-widest text-slate-400">你的选择</div>
-                  <div className="mt-1 text-sm font-semibold text-slate-700">
-                    {selected.length ? (
-                      <div className="flex flex-wrap gap-1">
-                        {selected.map((s) => (
-                          <img key={s} src={tileImage(s)} alt={s} className="h-7 w-5" />
-                        ))}
-                      </div>
-                    ) : (
-                      '--'
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div ref={tableRef} className="mt-4">
-                {showModalHand && (
-                  <div className="sticky top-2 z-10 mb-2 flex justify-center">
-                    <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] text-slate-500 shadow-sm backdrop-blur">
-                      <span className="text-slate-400">手牌</span>
-                      <div className="flex items-center gap-1">
-                        {parsePaistr(paistr)
-                          .slice(0, 10)
-                          .map((tile, index) => (
-                            <img
-                              key={`${tile}-float-${index}`}
-                              src={tileImage(tile)}
-                              alt={tile}
-                              className="h-6 w-4"
-                            />
-                          ))}
-                        {parsePaistr(paistr).length > 10 && (
-                          <span className="ml-1 text-slate-400">
-                            +{parsePaistr(paistr).length - 10}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <ResultsTable
-                  results={result.results}
-                  highlight={(discard) => {
-                    if (!selected.includes(discard)) return 'none'
-                    return best.find((b) => b.discard === discard) ? 'best' : 'warn'
-                  }}
-                />
-              </div>
-
-              {selected.some((s) => !result.results.find((r) => r.discard === s)) && (
-                <div className="mt-4 text-sm font-semibold text-rose-600">
-                  你选择了非候选切牌：{' '}
-                  <span className="inline-flex flex-wrap gap-1">
-                    {selected
-                      .filter((s) => !result.results.find((r) => r.discard === s))
-                      .map((s) => (
-                        <img key={s} src={tileImage(s)} alt={s} className="h-7 w-5" />
-                      ))}
-                  </span>
-                </div>
+                </span>
+              ) : (
+                <span className="ml-1">暂无</span>
               )}
             </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-5 py-4">
-              <div className="text-xs text-slate-500">
-                关闭不会清空当前题目，可随时再次打开分析。
-              </div>
-              <button
-                type="button"
-                onClick={onGenerate}
-                className="rounded-full bg-slate-900 px-5 py-2 text-xs font-semibold text-white shadow"
-              >
-                下一题
-              </button>
-            </div>
-          </div>
+          )}
         </div>
-      )}
+      </section>
     </>
   )
 }

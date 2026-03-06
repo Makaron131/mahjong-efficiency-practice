@@ -1,4 +1,3 @@
-import type { Ref } from 'react'
 import { parsePaistr, tileImage } from '../lib/tiles'
 
 type ManualPanelProps = {
@@ -9,7 +8,6 @@ type ManualPanelProps = {
   xun: number
   hongpai: boolean
   error: string | null
-  handRef?: Ref<HTMLDivElement>
   onPaistrChange: (value: string) => void
   onBaopaiChange: (value: string) => void
   onZhuangfengChange: (value: number) => void
@@ -26,7 +24,6 @@ export function ManualPanel({
   xun,
   hongpai,
   error,
-  handRef,
   onPaistrChange,
   onBaopaiChange,
   onZhuangfengChange,
@@ -43,10 +40,7 @@ export function ManualPanel({
         </div>
       </div>
 
-      <div
-        ref={handRef}
-        className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-2 text-xs text-slate-700"
-      >
+      <div className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-2 text-xs text-slate-700">
         <div className="flex flex-wrap items-center gap-1">
           {parsePaistr(paistr).map((tile, index) => (
             <img key={`${tile}-${index}`} src={tileImage(tile)} alt={tile} className="h-8 w-6" />

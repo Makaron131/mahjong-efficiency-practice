@@ -3,7 +3,7 @@ import { tileImage } from '../lib/tiles'
 
 type ResultsTableProps = {
   results: AnalyzeOutput['results']
-  highlight: (discard: string) => 'best' | 'warn' | 'none'
+  highlight: (discard: string) => 'best' | 'picked' | 'both' | 'none'
 }
 
 export function ResultsTable({ results, highlight }: ResultsTableProps) {
@@ -21,11 +21,13 @@ export function ResultsTable({ results, highlight }: ResultsTableProps) {
           {results.map((row) => {
             const state = highlight(row.discard)
             const rowClass =
-              state === 'best'
-                ? 'grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 border-t border-emerald-200/70 bg-emerald-50/60 px-3 py-2 text-sm sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]'
-                : state === 'warn'
-                  ? 'grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 border-t border-yellow-200/70 bg-yellow-50/70 px-3 py-2 text-sm sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]'
-                  : 'grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 border-t border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]'
+              state === 'both'
+                ? 'grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 border-t border-emerald-300/80 bg-emerald-100/80 px-3 py-2 text-sm sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]'
+                : state === 'best'
+                  ? 'grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 border-t border-sky-300/80 bg-sky-100/80 px-3 py-2 text-sm sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]'
+                  : state === 'picked'
+                    ? 'grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 border-t border-amber-300/80 bg-amber-100/80 px-3 py-2 text-sm sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]'
+                    : 'grid grid-cols-[52px_44px_minmax(0,1fr)_48px] gap-2 border-t border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 sm:grid-cols-[52px_44px_minmax(0,1fr)_48px_56px]'
             return (
               <div key={row.discard} className={rowClass}>
                 <span>
